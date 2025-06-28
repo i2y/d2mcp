@@ -153,7 +153,6 @@ func (m *mockOracleRepository) SerializeDiagram(ctx context.Context, diagramID s
 	return "serialized content", nil
 }
 
-
 func TestOracleUseCase_CreateElement(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -234,7 +233,7 @@ func TestOracleUseCase_CreateElement(t *testing.T) {
 
 func TestOracleUseCase_SetAttribute(t *testing.T) {
 	value := "cylinder"
-	
+
 	tests := []struct {
 		name    string
 		op      *entity.OracleOperation
@@ -300,7 +299,7 @@ func TestOracleUseCase_SetAttribute(t *testing.T) {
 
 func TestOracleUseCase_MoveElement(t *testing.T) {
 	newKey := "container.server"
-	
+
 	tests := []struct {
 		name    string
 		op      *entity.OracleOperation
@@ -369,7 +368,7 @@ func TestOracleUseCase_MoveElement(t *testing.T) {
 func TestOracleUseCase_ExecuteOperation(t *testing.T) {
 	value := "test"
 	newKey := "newname"
-	
+
 	tests := []struct {
 		name    string
 		op      *entity.OracleOperation
