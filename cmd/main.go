@@ -62,10 +62,11 @@ func main() {
 	ctx := context.Background()
 
 	// Initialize repository.
-	diagramRepo := d2.NewD2Repository()
+	oracleRepo := d2.NewD2OracleRepository()
 
-	// Initialize usecase.
-	diagramUseCase := usecase.NewDiagramUseCase(diagramRepo)
+	// Initialize usecases.
+	diagramUseCase := usecase.NewDiagramUseCase(oracleRepo)
+	oracleUseCase := usecase.NewOracleUseCase(oracleRepo)
 
 	// Initialize MCP server.
 	server, err := mcp.NewServer(ServerName, ServerVersion)
@@ -79,6 +80,14 @@ func main() {
 	createHandler := handler.NewCreateHandler(diagramUseCase)
 	exportHandler := handler.NewExportHandler(diagramUseCase)
 	saveHandler := handler.NewSaveHandler(diagramUseCase)
+
+	// Initialize Oracle handlers.
+	oracleCreateHandler := handler.NewOracleCreateHandler(oracleUseCase)
+	oracleSetHandler := handler.NewOracleSetHandler(oracleUseCase)
+	oracleDeleteHandler := handler.NewOracleDeleteHandler(oracleUseCase)
+	oracleMoveHandler := handler.NewOracleMoveHandler(oracleUseCase)
+	oracleRenameHandler := handler.NewOracleRenameHandler(oracleUseCase)
+	oracleGetHandler := handler.NewOracleGetHandler(oracleUseCase)
 
 	// Register tools.
 	if err := server.RegisterTool(renderHandler.GetTool(), renderHandler.GetHandler()); err != nil {
@@ -97,6 +106,26 @@ func main() {
 	}
 	if err := server.RegisterTool(saveHandler.GetTool(), saveHandler.GetHandler()); err != nil {
 		log.Fatalf("Failed to register save tool: %v", err)
+	}
+
+	// Register Oracle tools.
+	if err := server.RegisterTool(oracleCreateHandler.GetTool(), oracleCreateHandler.GetHandler()); err != nil {
+		log.Fatalf("Failed to register oracle create tool: %v", err)
+	}
+	if err := server.RegisterTool(oracleSetHandler.GetTool(), oracleSetHandler.GetHandler()); err != nil {
+		log.Fatalf("Failed to register oracle set tool: %v", err)
+	}
+	if err := server.RegisterTool(oracleDeleteHandler.GetTool(), oracleDeleteHandler.GetHandler()); err != nil {
+		log.Fatalf("Failed to register oracle delete tool: %v", err)
+	}
+	if err := server.RegisterTool(oracleMoveHandler.GetTool(), oracleMoveHandler.GetHandler()); err != nil {
+		log.Fatalf("Failed to register oracle move tool: %v", err)
+	}
+	if err := server.RegisterTool(oracleRenameHandler.GetTool(), oracleRenameHandler.GetHandler()); err != nil {
+		log.Fatalf("Failed to register oracle rename tool: %v", err)
+	}
+	if err := server.RegisterTool(oracleGetHandler.GetTool(), oracleGetHandler.GetHandler()); err != nil {
+		log.Fatalf("Failed to register oracle get tool: %v", err)
 	}
 
 	// Start the server.

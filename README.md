@@ -4,13 +4,31 @@ A Model Context Protocol (MCP) server that provides D2 diagram generation and ma
 
 D2 is a modern diagram scripting language that turns text to diagrams. This MCP server allows AI assistants like Claude to create, render, export, and save D2 diagrams programmatically.
 
+With the new Oracle API integration, AI assistants can now build and modify diagrams incrementally, making it perfect for:
+- Converting conversations into architecture diagrams
+- Building flowcharts step-by-step as requirements are discussed
+- Creating entity relationship diagrams from database schemas
+- Generating system diagrams from code analysis
+- Refining diagrams based on user feedback without starting over
+
 ## Features
 
+### Basic Diagram Operations
 - **d2_render** - Render D2 text into diagrams (SVG, PNG, PDF formats)
 - **d2_render_to_file** - Render D2 text and save directly to file
 - **d2_create** - Create new diagrams programmatically  
 - **d2_export** - Export diagrams to various formats (SVG, PNG, PDF)
 - **d2_save** - Save existing diagrams to files
+
+### Oracle API for Incremental Editing (New!)
+- **d2_oracle_create** - Create shapes and connections incrementally
+- **d2_oracle_set** - Set attributes on existing elements
+- **d2_oracle_delete** - Delete specific elements from diagrams
+- **d2_oracle_move** - Move shapes between containers
+- **d2_oracle_rename** - Rename diagram elements
+- **d2_oracle_get_info** - Get information about shapes, connections, or containers
+
+### Additional Features
 - **20 themes** - Support for all D2 themes (18 light + 2 dark)
 - **MCP Protocol** - Standard protocol for AI tool integration
 
@@ -35,6 +53,7 @@ d2mcp/
 ## Prerequisites
 
 - Go 1.24.3 or higher
+- D2 v0.6.7 or higher (included as dependency)
 - For PNG/PDF export (optional):
   - `rsvg-convert` (from librsvg) or
   - ImageMagick (`convert` command)
@@ -180,6 +199,122 @@ Save a diagram to a file:
 }
 ```
 
+### Oracle API Tools
+
+The Oracle API tools enable incremental diagram manipulation without regenerating the entire diagram. These tools are ideal for building diagrams step-by-step or making surgical edits.
+
+#### d2_oracle_create
+
+Create a new shape or connection:
+
+```json
+{
+  "diagram_id": "my-diagram",
+  "key": "server"  // Creates a shape
+}
+```
+
+```json
+{
+  "diagram_id": "my-diagram", 
+  "key": "server -> database"  // Creates a connection
+}
+```
+
+#### d2_oracle_set
+
+Set attributes on existing elements:
+
+```json
+{
+  "diagram_id": "my-diagram",
+  "key": "server.shape",
+  "value": "cylinder"
+}
+```
+
+```json
+{
+  "diagram_id": "my-diagram",
+  "key": "server.style.fill",
+  "value": "#f0f0f0"
+}
+```
+
+#### d2_oracle_delete
+
+Delete elements from the diagram:
+
+```json
+{
+  "diagram_id": "my-diagram",
+  "key": "server"  // Deletes the server and its children
+}
+```
+
+#### d2_oracle_move
+
+Move elements between containers:
+
+```json
+{
+  "diagram_id": "my-diagram",
+  "key": "server",
+  "new_parent": "network.internal",  // Moves server into network.internal
+  "include_descendants": "true"       // Also moves child elements
+}
+```
+
+#### d2_oracle_rename
+
+Rename diagram elements:
+
+```json
+{
+  "diagram_id": "my-diagram",
+  "key": "server",
+  "new_name": "web_server"
+}
+```
+
+#### d2_oracle_get_info
+
+Get information about diagram elements:
+
+```json
+{
+  "diagram_id": "my-diagram",
+  "key": "server",
+  "info_type": "object"  // Options: "object", "edge", "children"
+}
+```
+
+### Example Oracle API Workflow
+
+```javascript
+// 1. Create a diagram
+d2_create({ id: "architecture" })
+
+// 2. Add shapes incrementally
+d2_oracle_create({ diagram_id: "architecture", key: "web" })
+d2_oracle_create({ diagram_id: "architecture", key: "api" })
+d2_oracle_create({ diagram_id: "architecture", key: "db" })
+
+// 3. Set properties
+d2_oracle_set({ diagram_id: "architecture", key: "db.shape", value: "cylinder" })
+d2_oracle_set({ diagram_id: "architecture", key: "web.label", value: "Web Server" })
+
+// 4. Create connections
+d2_oracle_create({ diagram_id: "architecture", key: "web -> api" })
+d2_oracle_create({ diagram_id: "architecture", key: "api -> db" })
+
+// 5. Reorganize if needed
+d2_oracle_move({ diagram_id: "architecture", key: "api", new_parent: "backend" })
+
+// 6. Export final result
+d2_export({ diagramId: "architecture", format: "svg" })
+```
+
 ## Development
 
 ### Running tests
@@ -258,6 +393,19 @@ Download and install ImageMagick from the official website.
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Changelog
+
+### v0.2.0 (Latest)
+- Added D2 Oracle API integration for incremental diagram manipulation
+- 6 new MCP tools for creating, modifying, and querying diagram elements
+- Support for stateful diagram editing sessions
+
+### v0.1.0
+- Initial release with basic D2 diagram operations
+- Support for rendering, creating, exporting, and saving diagrams
+- 20 built-in themes
+- MCP protocol integration
 
 ## License
 
