@@ -329,32 +329,6 @@ d2_oracle_create({ diagram_id: "architecture", key: "api -> cache" })
 d2_export({ diagramId: "architecture", format: "svg" })
 ```
 
-## Migration Guide
-
-### Migration from Previous Versions
-
-The API has been simplified to provide a single, unified approach for diagram creation:
-
-**Current approach:**
-```javascript
-// Create a diagram with content and export it
-d2_create({ 
-  id: "my-diagram",
-  content: "a -> b" 
-})
-d2_export({ 
-  diagramId: "my-diagram", 
-  format: "svg" 
-})
-```
-
-### Benefits of the Unified Approach
-
-1. **Consistency**: All diagrams are created the same way, whether starting empty or with content
-2. **Flexibility**: Can seamlessly switch between static rendering and incremental editing
-3. **Future-proof**: Enables advanced features like diagram versioning and collaboration
-4. **Simplicity**: One tool to learn for diagram creation instead of multiple
-
 ### When to Use Each Tool
 
 - **d2_create**: Always use for new diagrams - both empty (for incremental building) and with initial D2 content
