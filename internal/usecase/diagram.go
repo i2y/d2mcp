@@ -62,3 +62,13 @@ func (uc *DiagramUseCase) ExportDiagram(ctx context.Context, diagramID string, f
 
 	return uc.repo.Export(ctx, diagramID, format)
 }
+
+// Create creates a diagram with the given ID and optional content.
+// This is a convenience method that handles both empty and pre-populated diagrams.
+func (uc *DiagramUseCase) Create(ctx context.Context, id string, content string) error {
+	diagram := &entity.Diagram{
+		ID:      id,
+		Content: content,
+	}
+	return uc.CreateDiagram(ctx, diagram)
+}

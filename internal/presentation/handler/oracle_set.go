@@ -27,10 +27,10 @@ func NewOracleSetHandler(useCase *usecase.OracleUseCase) *OracleSetHandler {
 func (h *OracleSetHandler) GetTool() mcp.Tool {
 	return mcp.NewTool(
 		"d2_oracle_set",
-		mcp.WithDescription("Set attributes on a shape or connection in a D2 diagram"),
+		mcp.WithDescription("Modify properties of existing diagram elements. Use this when you need to: transform basic shapes into special types (sql_table, class, sequence_diagram), add visual styling (colors, fonts, borders), set labels and tooltips, or add content like markdown or code blocks. Common attributes: shape (rectangle, cylinder, person, cloud), style.fill (colors), style.stroke, label, tooltip, icon. For special shapes: 'User.shape: sql_table' then 'User.id: int |pk|' for columns, 'Animal.shape: class' then 'Animal.+name: string' for fields. For SQL table constraints: 'User.id.constraint' with value 'primary_key', 'foreign_key', or 'unique'. Note: For multiple constraints, use d2_create with array syntax like 'id: int {constraint: [primary_key; unique]}'. Essential for making diagrams visually rich and semantically meaningful."),
 		mcp.WithString("diagram_id", mcp.Description("ID of the diagram to modify"), mcp.Required()),
-		mcp.WithString("key", mcp.Description("Key of the element to modify (e.g., 'server.shape' or 'connection.style.stroke')"), mcp.Required()),
-		mcp.WithString("value", mcp.Description("The value to set"), mcp.Required()),
+		mcp.WithString("key", mcp.Description("Key path to the attribute. Examples: 'User.shape' for shape type, 'User.style.fill' for color, 'User.id' for sql_table columns, 'User.id.constraint' for SQL constraints, 'Animal.+name' for class fields, 'User.tooltip' for hover text"), mcp.Required()),
+		mcp.WithString("value", mcp.Description("The value to set. Shape types: rectangle, cylinder, person, cloud, sql_table, class, code, sequence_diagram. Colors: red, blue, #FF5733. For sql_table columns: 'int |pk|', 'varchar(255)'. For SQL constraints: 'primary_key', 'foreign_key', 'unique'. For markdown: '|md # Title\\nContent |'"), mcp.Required()),
 		mcp.WithString("tag", mcp.Description("Optional tag for the attribute (e.g., 'label' or 'style')")),
 	)
 }

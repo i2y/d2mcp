@@ -31,10 +31,10 @@ func NewSaveHandler(useCase *usecase.DiagramUseCase) *SaveHandler {
 func (h *SaveHandler) GetTool() mcp.Tool {
 	return mcp.NewTool(
 		"d2_save",
-		mcp.WithDescription("Save an existing diagram to a file"),
+		mcp.WithDescription("Save an existing diagram to a file on disk. The diagram must be created first using d2_create. This tool exports the diagram in the specified format and writes it to a file path, returning the path where it was saved. Supported formats: svg (default), png, pdf. If no path is provided, saves to a temporary directory with a timestamped filename. Path handling: absolute paths (e.g., /Users/name/diagram.svg) are used as-is; relative paths (e.g., diagram.svg) are resolved from the MCP server's working directory. When unsure, either use absolute paths or omit the path to use the temp directory."),
 		mcp.WithString("diagramId", mcp.Description("ID of the diagram to save"), mcp.Required()),
 		mcp.WithString("format", mcp.Description("Export format (svg, png, pdf)"), mcp.Enum("svg", "png", "pdf"), mcp.DefaultString("svg")),
-		mcp.WithString("path", mcp.Description("Output file path (optional, defaults to temp directory)")),
+		mcp.WithString("path", mcp.Description("Output file path. Examples: '/Users/name/diagram.svg' (absolute), 'output/diagram.svg' (relative to MCP server), or omit for auto-generated path in temp directory")),
 	)
 }
 

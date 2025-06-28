@@ -180,16 +180,51 @@ func (r *D2OracleRepository) DeleteElement(ctx context.Context, diagramID string
 
 	session := r.getOrCreateSession(diagramID, data.graph)
 
-	// Get ID deltas before deletion
-	idDeltas, err := d2oracle.DeleteIDDeltas(session.Graph, boardPath, key)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get delete ID deltas: %w", err)
-	}
+	// Check if this is a connection deletion (contains "->")
+	isConnection := strings.Contains(key, "->")
+
+	// Try to get ID deltas before deletion, but handle panic gracefully
+	var idDeltas map[string]string
+	func() {
+		defer func() {
+			if panicErr := recover(); panicErr != nil {
+				// If panic occurs, just use empty ID deltas
+				idDeltas = make(map[string]string)
+			}
+		}()
+		var err error
+		idDeltas, err = d2oracle.DeleteIDDeltas(session.Graph, boardPath, key)
+		if err != nil {
+			idDeltas = make(map[string]string)
+		}
+	}()
 
 	// Use d2oracle to delete element
-	newGraph, err := d2oracle.Delete(session.Graph, boardPath, key)
-	if err != nil {
-		return nil, fmt.Errorf("failed to delete element: %w", err)
+	var newGraph *d2graph.Graph
+	var deleteErr error
+	func() {
+		defer func() {
+			if panicErr := recover(); panicErr != nil {
+				// If panic occurs during delete, try alternative approach for connections
+				if isConnection {
+					// For connections, we'll recreate the graph without this connection
+					deleteErr = r.deleteConnectionWorkaround(ctx, diagramID, key)
+					if deleteErr == nil {
+						// Reload the graph after workaround
+						newGraph = r.diagrams[diagramID].graph
+					}
+				} else {
+					deleteErr = fmt.Errorf("failed to delete element: panic occurred - %v", panicErr)
+				}
+			}
+		}()
+		if deleteErr == nil {
+			newGraph, deleteErr = d2oracle.Delete(session.Graph, boardPath, key)
+		}
+	}()
+
+	if deleteErr != nil {
+		return nil, deleteErr
 	}
 
 	// Update session and stored graph
@@ -360,6 +395,65 @@ func (r *D2OracleRepository) getOrCreateSession(diagramID string, graph *d2graph
 
 	r.sessions[diagramID] = session
 	return session
+}
+
+// deleteConnectionWorkaround handles connection deletion when Oracle API panics
+// Note: This method assumes the caller already holds the mutex lock
+func (r *D2OracleRepository) deleteConnectionWorkaround(ctx context.Context, diagramID string, connectionKey string) error {
+	// Get current data - no lock needed as caller already has it
+	data, exists := r.diagrams[diagramID]
+	if !exists {
+		return fmt.Errorf("diagram %s not found", diagramID)
+	}
+
+	// Get current D2 text from the data
+	currentD2 := data.content
+	if data.graph != nil && data.graph.AST != nil {
+		currentD2 = d2format.Format(data.graph.AST)
+	}
+
+	// Parse the connection key (e.g., "Customer -> Order")
+	parts := strings.Split(connectionKey, "->")
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid connection key format: %s", connectionKey)
+	}
+
+	src := strings.TrimSpace(parts[0])
+	dst := strings.TrimSpace(parts[1])
+
+	// Remove the connection from D2 text
+	// This is a simple approach - for production, we'd want to use proper AST manipulation
+	lines := strings.Split(currentD2, "\n")
+	var newLines []string
+	for _, line := range lines {
+		// Skip lines that match the connection pattern
+		trimmedLine := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmedLine, src+" -> "+dst) ||
+			strings.HasPrefix(trimmedLine, src+"-> "+dst) ||
+			strings.HasPrefix(trimmedLine, src+" ->"+dst) ||
+			strings.HasPrefix(trimmedLine, src+"->"+dst) {
+			continue
+		}
+		newLines = append(newLines, line)
+	}
+
+	newD2 := strings.Join(newLines, "\n")
+
+	// Compile the new D2 text directly without calling LoadDiagram to avoid deadlock
+	graph, _, err := d2compiler.Compile("", strings.NewReader(newD2), &d2compiler.CompileOptions{
+		UTF16Pos: false,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to compile diagram after removing connection: %w", err)
+	}
+
+	// Update the diagram data directly
+	r.diagrams[diagramID] = &diagramData{
+		content: newD2,
+		graph:   graph,
+	}
+
+	return nil
 }
 
 func (r *D2OracleRepository) graphToEntity(graph *d2graph.Graph) *entity.DiagramGraph {

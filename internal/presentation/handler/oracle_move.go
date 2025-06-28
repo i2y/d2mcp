@@ -27,11 +27,11 @@ func NewOracleMoveHandler(useCase *usecase.OracleUseCase) *OracleMoveHandler {
 func (h *OracleMoveHandler) GetTool() mcp.Tool {
 	return mcp.NewTool(
 		"d2_oracle_move",
-		mcp.WithDescription("Move a shape to a new container in a D2 diagram"),
+		mcp.WithDescription("Reorganize diagram structure by moving shapes between containers. Use this when you need to: group related components together, refactor diagram hierarchy, move elements into or out of systems/packages, or restructure without losing connections. Containers are shapes that hold other shapes (like 'System', 'Network', or any shape with children). Moving preserves all connections - they're automatically rerouted. Set include_descendants=false to move only the parent shape, leaving children in original location. Essential for maintaining clean, logical diagram organization."),
 		mcp.WithString("diagram_id", mcp.Description("ID of the diagram to modify"), mcp.Required()),
-		mcp.WithString("key", mcp.Description("Key of the element to move (e.g., 'server')"), mcp.Required()),
-		mcp.WithString("new_parent", mcp.Description("New parent container key (e.g., 'network.internal')"), mcp.Required()),
-		mcp.WithString("include_descendants", mcp.Description("Whether to move child elements along with the parent (true/false)"), mcp.DefaultString("true")),
+		mcp.WithString("key", mcp.Description("Key of the element to move (e.g., 'server', 'Database.users_table')"), mcp.Required()),
+		mcp.WithString("new_parent", mcp.Description("Target container key where element will be moved. Use empty string '' to move to root level. Examples: 'System' to move into System container, 'Network.DMZ' for nested container"), mcp.Required()),
+		mcp.WithString("include_descendants", mcp.Description("Whether to move child elements along with the parent (true/false). Default true preserves hierarchy"), mcp.DefaultString("true")),
 	)
 }
 

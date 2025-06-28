@@ -27,9 +27,9 @@ func NewOracleDeleteHandler(useCase *usecase.OracleUseCase) *OracleDeleteHandler
 func (h *OracleDeleteHandler) GetTool() mcp.Tool {
 	return mcp.NewTool(
 		"d2_oracle_delete",
-		mcp.WithDescription("Delete a shape or connection from a D2 diagram"),
+		mcp.WithDescription("Remove shapes or connections from a D2 diagram. Use this when you need to: clean up unwanted elements, refactor diagram structure, or remove outdated components. Important: deleting a container shape will also delete ALL its child elements. Connections to/from deleted shapes are automatically removed. Use this carefully - consider using d2_oracle_move to relocate elements instead if you want to preserve them. Perfect for iterative diagram refinement and cleanup operations."),
 		mcp.WithString("diagram_id", mcp.Description("ID of the diagram to modify"), mcp.Required()),
-		mcp.WithString("key", mcp.Description("Key of the element to delete (e.g., 'server' or 'server -> database')"), mcp.Required()),
+		mcp.WithString("key", mcp.Description("Key of the element to delete. Examples: 'server' for a shape, 'server -> database' for a connection, 'System.Database' for nested element. WARNING: Deleting containers removes all children"), mcp.Required()),
 	)
 }
 

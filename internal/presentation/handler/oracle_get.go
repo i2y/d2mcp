@@ -27,10 +27,10 @@ func NewOracleGetHandler(useCase *usecase.OracleUseCase) *OracleGetHandler {
 func (h *OracleGetHandler) GetTool() mcp.Tool {
 	return mcp.NewTool(
 		"d2_oracle_get_info",
-		mcp.WithDescription("Get information about a shape, connection, or container in a D2 diagram"),
+		mcp.WithDescription("Inspect and analyze diagram elements to understand structure and properties. Use this when you need to: verify element exists before modifying, check current properties/attributes, explore container contents, debug connection issues, or understand diagram hierarchy. Info types: 'object' returns shape details (labels, styles, attributes), 'edge' returns connection properties (labels, arrows, styles), 'children' lists all elements inside a container. Essential for safe modifications - always check before changing. Returns JSON with complete element information."),
 		mcp.WithString("diagram_id", mcp.Description("ID of the diagram"), mcp.Required()),
-		mcp.WithString("key", mcp.Description("Key of the element to inspect (e.g., 'server' or 'server -> database')"), mcp.Required()),
-		mcp.WithString("info_type", mcp.Description("Type of info: 'object', 'edge', or 'children'"), mcp.DefaultString("object")),
+		mcp.WithString("key", mcp.Description("Key of the element to inspect. Examples: 'server' for shape info, 'server -> database' for connection info, 'System' to see what's inside a container"), mcp.Required()),
+		mcp.WithString("info_type", mcp.Description("Type of information to retrieve: 'object' for shape/container details, 'edge' for connection properties, 'children' to list elements inside a container"), mcp.DefaultString("object")),
 	)
 }
 

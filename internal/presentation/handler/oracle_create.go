@@ -27,9 +27,9 @@ func NewOracleCreateHandler(useCase *usecase.OracleUseCase) *OracleCreateHandler
 func (h *OracleCreateHandler) GetTool() mcp.Tool {
 	return mcp.NewTool(
 		"d2_oracle_create",
-		mcp.WithDescription("Create a new shape or connection in a D2 diagram"),
+		mcp.WithDescription("Add new shapes or connections to an existing D2 diagram incrementally. Use this when you need to build diagrams piece-by-piece or add elements to a diagram after initial creation. Perfect for: iteratively building complex diagrams, adding elements based on parsed data, or modifying existing diagrams without regenerating everything. Creates basic elements only - use d2_oracle_set afterward to add special shapes (sql_table, class), styles, or properties. Example: Create 'User' shape, then set 'User.shape: person' with d2_oracle_set."),
 		mcp.WithString("diagram_id", mcp.Description("ID of the diagram to modify"), mcp.Required()),
-		mcp.WithString("key", mcp.Description("Key for the new element (e.g., 'server' or 'server -> database')"), mcp.Required()),
+		mcp.WithString("key", mcp.Description("Key for the new element. Examples: 'User' for shape, 'User -> API' for connection, 'System.Database' for nested shape. Use dots for nesting, arrows (->) for connections"), mcp.Required()),
 	)
 }
 
