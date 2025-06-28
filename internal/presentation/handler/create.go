@@ -27,9 +27,9 @@ func NewCreateHandler(useCase *usecase.DiagramUseCase) *CreateHandler {
 func (h *CreateHandler) GetTool() mcp.Tool {
 	return mcp.NewTool(
 		"d2_create",
-		mcp.WithDescription("Create a new D2 diagram programmatically"),
+		mcp.WithDescription("Create a new diagram that can be edited with Oracle API tools. This is the unified way to create diagrams:\n\n1. Empty diagram (no content): For building incrementally with Oracle API\n2. From D2 text (with content): For rendering complete D2 diagrams\n\nBoth types are fully editable using d2_oracle_* tools.\n\nExamples:\n- d2_create(id=\"arch\") → Empty diagram for incremental building\n- d2_create(id=\"arch\", content=\"a -> b\") → Diagram from D2 text\n\nUse cases:\n- Building diagrams from data sources (use empty)\n- Rendering complete D2 text (use with content)\n- Converting existing D2 to editable form (use with content)\n- Interactive diagram creation (use empty)"),
 		mcp.WithString("id", mcp.Description("Unique identifier for the diagram"), mcp.Required()),
-		mcp.WithString("content", mcp.Description("Initial D2 content (optional)"), mcp.DefaultString("")),
+		mcp.WithString("content", mcp.Description("Optional D2 text content. If provided, creates a diagram from this content (which can then be edited with Oracle API). If not provided, creates an empty diagram for incremental building. Both are fully editable."), mcp.DefaultString("")),
 	)
 }
 
@@ -59,5 +59,13 @@ func (h *CreateHandler) Handle(ctx context.Context, request mcp.CallToolRequest)
 		return mcp.NewToolResultErrorFromErr("Failed to create diagram", err), nil
 	}
 
-	return mcp.NewToolResultText(fmt.Sprintf("Diagram '%s' created successfully", id)), nil
+	// Provide appropriate feedback based on whether content was provided
+	var message string
+	if content != "" {
+		message = fmt.Sprintf("Diagram '%s' created successfully from provided D2 content. You can now use d2_oracle_* tools to modify it, or d2_export to render it.", id)
+	} else {
+		message = fmt.Sprintf("Empty diagram '%s' created successfully. Use d2_oracle_create to add shapes and connections.", id)
+	}
+
+	return mcp.NewToolResultText(message), nil
 }

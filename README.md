@@ -4,6 +4,8 @@ A Model Context Protocol (MCP) server that provides D2 diagram generation and ma
 
 D2 is a modern diagram scripting language that turns text to diagrams. This MCP server allows AI assistants like Claude to create, render, export, and save D2 diagrams programmatically.
 
+The server provides 10 tools through the MCP protocol with enhanced descriptions for optimal AI assistant integration, enabling both simple diagram rendering and sophisticated incremental diagram building using the Oracle API.
+
 With the new Oracle API integration, AI assistants can now build and modify diagrams incrementally, making it perfect for:
 - Converting conversations into architecture diagrams
 - Building flowcharts step-by-step as requirements are discussed
@@ -14,13 +16,11 @@ With the new Oracle API integration, AI assistants can now build and modify diag
 ## Features
 
 ### Basic Diagram Operations
-- **d2_render** - Render D2 text into diagrams (SVG, PNG, PDF formats)
-- **d2_render_to_file** - Render D2 text and save directly to file
-- **d2_create** - Create new diagrams programmatically  
+- **d2_create** - Create new diagrams with optional initial content (unified approach)
 - **d2_export** - Export diagrams to various formats (SVG, PNG, PDF)
 - **d2_save** - Save existing diagrams to files
 
-### Oracle API for Incremental Editing (New!)
+### Oracle API for Incremental Editing
 - **d2_oracle_create** - Create shapes and connections incrementally
 - **d2_oracle_set** - Set attributes on existing elements
 - **d2_oracle_delete** - Delete specific elements from diagrams
@@ -125,55 +125,22 @@ Replace `/path/to/d2mcp` with the actual path to your built binary.
 
 ## Tools
 
-### d2_render
-
-Render D2 text into a diagram:
-
-```json
-{
-  "content": "a -> b: Hello",
-  "format": "svg",  // Options: "svg", "png", "pdf" (default: "svg")
-  "theme": 0        // Theme ID (see THEMES.md for full list, default: 0)
-}
-```
-
-**Example D2 content**:
-```
-# Basic flow
-start -> middle: Request
-middle -> end: Response
-
-# With styling
-server: {
-  shape: cylinder
-  style.fill: "#f0f0f0"
-}
-```
-
-**Note**: PNG and PDF formats require either `rsvg-convert` or ImageMagick (`convert`) to be installed on your system.
-
-### d2_render_to_file
-
-Render D2 text and save to a file:
-
-```json
-{
-  "content": "a -> b: Hello",
-  "format": "png",
-  "theme": 0
-}
-```
-
-Returns the path to the saved file.
-
 ### d2_create
 
-Create a new diagram:
+Create a new diagram with optional initial content (unified approach):
 
+**Empty diagram (for Oracle API workflow):**
+```json
+{
+  "id": "my-diagram"
+}
+```
+
+**With initial D2 content:**
 ```json
 {
   "id": "my-diagram",
-  "content": "initial content (optional)"
+  "content": "a -> b: Hello\nserver: {shape: cylinder}"
 }
 ```
 
@@ -302,10 +269,30 @@ Get the current D2 text representation of the diagram:
 
 Returns the complete D2 text of the diagram including all modifications made through Oracle API.
 
+### Creating Sequence Diagrams
+
+D2 has built-in support for sequence diagrams. Use `d2_create` with proper D2 sequence diagram syntax:
+
+```json
+{
+  "id": "api-flow",
+  "content": "shape: sequence_diagram\n\nClient -> Server: HTTP Request\nServer -> Database: Query\nDatabase -> Server: Results\nServer -> Client: HTTP Response\n\n# Add styling\nClient -> Server.\"HTTP Request\": {style.stroke-dash: 3}\nDatabase -> Server.\"Results\": {style.stroke-dash: 3}"
+}
+```
+
+**Example with actors and grouping:**
+```json
+{
+  "id": "auth-flow",
+  "content": "shape: sequence_diagram\n\ntitle: Authentication Flow {near: top-center}\n\n# Define actors\nClient: {shape: person}\nAuth Server: {shape: cloud}\nDatabase: {shape: cylinder}\n\n# Interactions\nClient -> Auth Server: Login Request\nAuth Server -> Database: Validate Credentials\nDatabase -> Auth Server: User Data\n\ngroup: Success Case {\n  Auth Server -> Client: Access Token\n  Client -> Auth Server: API Request + Token\n  Auth Server -> Client: API Response\n}\n\ngroup: Failure Case {\n  Auth Server -> Client: 401 Unauthorized\n}"
+}
+```
+
 ### Example Oracle API Workflow
 
+**Starting from scratch:**
 ```javascript
-// 1. Create a diagram
+// 1. Create an empty diagram
 d2_create({ id: "architecture" })
 
 // 2. Add shapes incrementally
@@ -321,15 +308,58 @@ d2_oracle_set({ diagram_id: "architecture", key: "web.label", value: "Web Server
 d2_oracle_create({ diagram_id: "architecture", key: "web -> api" })
 d2_oracle_create({ diagram_id: "architecture", key: "api -> db" })
 
-// 5. Reorganize if needed
-d2_oracle_move({ diagram_id: "architecture", key: "api", new_parent: "backend" })
-
-// 6. Get current D2 text
-d2_oracle_serialize({ diagram_id: "architecture" })
-
-// 7. Export final result
+// 5. Export final result
 d2_export({ diagramId: "architecture", format: "svg" })
 ```
+
+**Starting with existing content (unified approach):**
+```javascript
+// 1. Create diagram with initial content
+d2_create({ 
+  id: "architecture",
+  content: "web -> api -> db\ndb: {shape: cylinder}"
+})
+
+// 2. Enhance incrementally using Oracle API
+d2_oracle_set({ diagram_id: "architecture", key: "web.label", value: "Web Server" })
+d2_oracle_create({ diagram_id: "architecture", key: "cache" })
+d2_oracle_create({ diagram_id: "architecture", key: "api -> cache" })
+
+// 3. Export final result
+d2_export({ diagramId: "architecture", format: "svg" })
+```
+
+## Migration Guide
+
+### Migration from Previous Versions
+
+The API has been simplified to provide a single, unified approach for diagram creation:
+
+**Current approach:**
+```javascript
+// Create a diagram with content and export it
+d2_create({ 
+  id: "my-diagram",
+  content: "a -> b" 
+})
+d2_export({ 
+  diagramId: "my-diagram", 
+  format: "svg" 
+})
+```
+
+### Benefits of the Unified Approach
+
+1. **Consistency**: All diagrams are created the same way, whether starting empty or with content
+2. **Flexibility**: Can seamlessly switch between static rendering and incremental editing
+3. **Future-proof**: Enables advanced features like diagram versioning and collaboration
+4. **Simplicity**: One tool to learn for diagram creation instead of multiple
+
+### When to Use Each Tool
+
+- **d2_create**: Always use for new diagrams - both empty (for incremental building) and with initial D2 content
+- **d2_oracle_***: Use for incremental modifications to any diagram created with d2_create
+- **d2_export**: Use to render the final diagram in your desired format
 
 ## Development
 
@@ -412,7 +442,14 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Changelog
 
-### v0.3.0 (Latest)
+### v0.4.0 (Latest)
+- Simplified API to unified `d2_create` for all diagram creation needs
+- Enhanced tool descriptions for better AI assistant integration
+- Improved Oracle API error handling and validation
+- Reduced API surface from 14 to 10 tools
+- **Breaking Change**: Removed d2_render, d2_render_to_file, d2_import, d2_from_text - use d2_create instead
+
+### v0.3.0
 - Added `d2_oracle_serialize` tool to get current D2 text representation
 
 ### v0.2.0

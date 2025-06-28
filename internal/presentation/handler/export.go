@@ -29,7 +29,7 @@ func NewExportHandler(useCase *usecase.DiagramUseCase) *ExportHandler {
 func (h *ExportHandler) GetTool() mcp.Tool {
 	return mcp.NewTool(
 		"d2_export",
-		mcp.WithDescription("Export a diagram to a specific format"),
+		mcp.WithDescription("Export an existing diagram to SVG, PNG, or PDF format. The diagram must first be created using d2_create (not d2_render). Supports exporting all D2 features including SQL tables, UML classes, sequence diagrams, code blocks, and markdown-rich documentation. Note: PNG and PDF formats require external tools (e.g., Chromium) to be installed on the system."),
 		mcp.WithString("diagramId", mcp.Description("ID of the diagram to export"), mcp.Required()),
 		mcp.WithString("format", mcp.Description("Export format (svg, png, pdf)"), mcp.Enum("svg", "png", "pdf"), mcp.DefaultString("svg")),
 	)
@@ -73,4 +73,16 @@ func (h *ExportHandler) Handle(ctx context.Context, request mcp.CallToolRequest)
 	mimeType := getMimeType(format)
 
 	return mcp.NewToolResultText(fmt.Sprintf("data:%s;base64,%s", mimeType, encoded)), nil
+}
+
+// getMimeType returns the MIME type for the given format.
+func getMimeType(format entity.ExportFormat) string {
+	switch format {
+	case entity.FormatPNG:
+		return "image/png"
+	case entity.FormatPDF:
+		return "application/pdf"
+	default:
+		return "image/svg+xml"
+	}
 }

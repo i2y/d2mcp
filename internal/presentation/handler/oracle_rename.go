@@ -27,10 +27,10 @@ func NewOracleRenameHandler(useCase *usecase.OracleUseCase) *OracleRenameHandler
 func (h *OracleRenameHandler) GetTool() mcp.Tool {
 	return mcp.NewTool(
 		"d2_oracle_rename",
-		mcp.WithDescription("Rename a shape or connection in a D2 diagram"),
+		mcp.WithDescription("Change the identifier of shapes or connections while preserving all relationships. Use this when you need to: improve clarity with better names, fix typos or naming inconsistencies, refactor diagram elements, or align with updated terminology. The rename is intelligent - ALL connections referencing the old name are automatically updated to use the new name. This includes connections where the element is source, target, or part of a longer path. Child elements keep their relative names. Safe operation that maintains diagram integrity."),
 		mcp.WithString("diagram_id", mcp.Description("ID of the diagram to modify"), mcp.Required()),
-		mcp.WithString("key", mcp.Description("Current key of the element (e.g., 'server')"), mcp.Required()),
-		mcp.WithString("new_name", mcp.Description("New name for the element (e.g., 'web_server')"), mcp.Required()),
+		mcp.WithString("key", mcp.Description("Current key of the element to rename (e.g., 'server', 'DB', 'System.OldName')"), mcp.Required()),
+		mcp.WithString("new_name", mcp.Description("New identifier for the element (e.g., 'web_server', 'Database', 'NewName'). Connections are automatically updated"), mcp.Required()),
 	)
 }
 

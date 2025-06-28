@@ -25,8 +25,8 @@ func NewOracleSerializeHandler(useCase *usecase.OracleUseCase) *OracleSerializeH
 func (h *OracleSerializeHandler) GetTool() mcp.Tool {
 	return mcp.NewTool(
 		"d2_oracle_serialize",
-		mcp.WithDescription("Get the current D2 text representation of a diagram being edited with Oracle API"),
-		mcp.WithString("diagram_id", mcp.Description("ID of the diagram to serialize"), mcp.Required()),
+		mcp.WithDescription("Export the current state of an Oracle-edited diagram as D2 text. Use this when you need to: see the complete D2 syntax after incremental changes, save diagram source for version control, share diagram definition with others, debug complex diagrams, or transition from Oracle API to direct D2 text editing. Returns the exact D2 code that would produce the current diagram, including all shapes, connections, special elements (sql_table, class), styles, and content. This is THE way to get the textual representation after using Oracle API tools."),
+		mcp.WithString("diagram_id", mcp.Description("ID of the diagram to get D2 text for"), mcp.Required()),
 	)
 }
 

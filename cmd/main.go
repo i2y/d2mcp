@@ -18,7 +18,7 @@ const (
 	// ServerName is the name of the MCP server.
 	ServerName = "d2mcp"
 	// ServerVersion is the version of the MCP server.
-	ServerVersion = "0.3.0"
+	ServerVersion = "0.4.0"
 )
 
 func main() {
@@ -75,8 +75,6 @@ func main() {
 	}
 
 	// Initialize handlers.
-	renderHandler := handler.NewRenderHandler(diagramUseCase)
-	renderWithFileHandler := handler.NewRenderWithFileHandler(diagramUseCase)
 	createHandler := handler.NewCreateHandler(diagramUseCase)
 	exportHandler := handler.NewExportHandler(diagramUseCase)
 	saveHandler := handler.NewSaveHandler(diagramUseCase)
@@ -91,19 +89,11 @@ func main() {
 	oracleSerializeHandler := handler.NewOracleSerializeHandler(oracleUseCase)
 
 	// Register tools.
-	if err := server.RegisterTool(renderHandler.GetTool(), renderHandler.GetHandler()); err != nil {
-		log.Fatalf("Failed to register render tool: %v", err)
-	}
 	if err := server.RegisterTool(createHandler.GetTool(), createHandler.GetHandler()); err != nil {
 		log.Fatalf("Failed to register create tool: %v", err)
 	}
 	if err := server.RegisterTool(exportHandler.GetTool(), exportHandler.GetHandler()); err != nil {
 		log.Fatalf("Failed to register export tool: %v", err)
-	}
-
-	// Register file-based tools.
-	if err := server.RegisterTool(renderWithFileHandler.GetTool(), renderWithFileHandler.GetHandler()); err != nil {
-		log.Fatalf("Failed to register renderWithFile tool: %v", err)
 	}
 	if err := server.RegisterTool(saveHandler.GetTool(), saveHandler.GetHandler()); err != nil {
 		log.Fatalf("Failed to register save tool: %v", err)
