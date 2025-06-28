@@ -27,6 +27,7 @@ With the new Oracle API integration, AI assistants can now build and modify diag
 - **d2_oracle_move** - Move shapes between containers
 - **d2_oracle_rename** - Rename diagram elements
 - **d2_oracle_get_info** - Get information about shapes, connections, or containers
+- **d2_oracle_serialize** - Get the current D2 text representation of the diagram
 
 ### Additional Features
 - **20 themes** - Support for all D2 themes (18 light + 2 dark)
@@ -289,6 +290,18 @@ Get information about diagram elements:
 }
 ```
 
+#### d2_oracle_serialize
+
+Get the current D2 text representation of the diagram:
+
+```json
+{
+  "diagram_id": "my-diagram"
+}
+```
+
+Returns the complete D2 text of the diagram including all modifications made through Oracle API.
+
 ### Example Oracle API Workflow
 
 ```javascript
@@ -311,7 +324,10 @@ d2_oracle_create({ diagram_id: "architecture", key: "api -> db" })
 // 5. Reorganize if needed
 d2_oracle_move({ diagram_id: "architecture", key: "api", new_parent: "backend" })
 
-// 6. Export final result
+// 6. Get current D2 text
+d2_oracle_serialize({ diagram_id: "architecture" })
+
+// 7. Export final result
 d2_export({ diagramId: "architecture", format: "svg" })
 ```
 
@@ -396,7 +412,10 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Changelog
 
-### v0.2.0 (Latest)
+### v0.3.0 (Latest)
+- Added `d2_oracle_serialize` tool to get current D2 text representation
+
+### v0.2.0
 - Added D2 Oracle API integration for incremental diagram manipulation
 - 6 new MCP tools for creating, modifying, and querying diagram elements
 - Support for stateful diagram editing sessions

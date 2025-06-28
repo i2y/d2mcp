@@ -18,7 +18,7 @@ const (
 	// ServerName is the name of the MCP server.
 	ServerName = "d2mcp"
 	// ServerVersion is the version of the MCP server.
-	ServerVersion = "0.1.0"
+	ServerVersion = "0.3.0"
 )
 
 func main() {
@@ -88,6 +88,7 @@ func main() {
 	oracleMoveHandler := handler.NewOracleMoveHandler(oracleUseCase)
 	oracleRenameHandler := handler.NewOracleRenameHandler(oracleUseCase)
 	oracleGetHandler := handler.NewOracleGetHandler(oracleUseCase)
+	oracleSerializeHandler := handler.NewOracleSerializeHandler(oracleUseCase)
 
 	// Register tools.
 	if err := server.RegisterTool(renderHandler.GetTool(), renderHandler.GetHandler()); err != nil {
@@ -126,6 +127,9 @@ func main() {
 	}
 	if err := server.RegisterTool(oracleGetHandler.GetTool(), oracleGetHandler.GetHandler()); err != nil {
 		log.Fatalf("Failed to register oracle get tool: %v", err)
+	}
+	if err := server.RegisterTool(oracleSerializeHandler.GetTool(), oracleSerializeHandler.GetHandler()); err != nil {
+		log.Fatalf("Failed to register oracle serialize tool: %v", err)
 	}
 
 	// Start the server.
