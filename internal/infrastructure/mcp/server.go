@@ -23,10 +23,10 @@ const (
 
 // SSEConfig contains configuration for SSE transport.
 type SSEConfig struct {
-	Addr               string
-	BaseURL            string
-	StaticBasePath     string
-	KeepAliveInterval  time.Duration
+	Addr              string
+	BaseURL           string
+	StaticBasePath    string
+	KeepAliveInterval time.Duration
 }
 
 // StreamableHTTPConfig contains configuration for Streamable HTTP transport.
@@ -39,10 +39,10 @@ type StreamableHTTPConfig struct {
 
 // Server represents the MCP server instance.
 type Server struct {
-	mcpServer             *server.MCPServer
-	transport             TransportType
-	sseConfig             *SSEConfig
-	streamableHTTPConfig  *StreamableHTTPConfig
+	mcpServer            *server.MCPServer
+	transport            TransportType
+	sseConfig            *SSEConfig
+	streamableHTTPConfig *StreamableHTTPConfig
 }
 
 // NewServer creates a new MCP server instance with default stdio transport.

@@ -105,7 +105,7 @@ func main() {
 				baseURL = fmt.Sprintf("http://%s", addr)
 			}
 		}
-		
+
 		sseConfig := &mcp.SSEConfig{
 			Addr:              addr,
 			BaseURL:           baseURL,
