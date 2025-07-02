@@ -17,6 +17,8 @@ const (
 	TransportStdio TransportType = "stdio"
 	// TransportSSE uses Server-Sent Events over HTTP.
 	TransportSSE TransportType = "sse"
+	// TransportStreamableHTTP uses Streamable HTTP protocol.
+	TransportStreamableHTTP TransportType = "streamable"
 )
 
 // SSEConfig contains configuration for SSE transport.
@@ -27,11 +29,20 @@ type SSEConfig struct {
 	KeepAliveInterval  time.Duration
 }
 
+// StreamableHTTPConfig contains configuration for Streamable HTTP transport.
+type StreamableHTTPConfig struct {
+	Addr              string
+	EndpointPath      string
+	HeartbeatInterval time.Duration
+	Stateless         bool
+}
+
 // Server represents the MCP server instance.
 type Server struct {
-	mcpServer *server.MCPServer
-	transport TransportType
-	sseConfig *SSEConfig
+	mcpServer             *server.MCPServer
+	transport             TransportType
+	sseConfig             *SSEConfig
+	streamableHTTPConfig  *StreamableHTTPConfig
 }
 
 // NewServer creates a new MCP server instance with default stdio transport.
@@ -60,6 +71,12 @@ func (s *Server) WithSSEConfig(config *SSEConfig) *Server {
 	return s
 }
 
+// WithStreamableHTTPConfig sets the Streamable HTTP configuration for the server.
+func (s *Server) WithStreamableHTTPConfig(config *StreamableHTTPConfig) *Server {
+	s.streamableHTTPConfig = config
+	return s
+}
+
 // RegisterTool registers a tool with the MCP server.
 func (s *Server) RegisterTool(tool mcp.Tool, handler server.ToolHandlerFunc) error {
 	s.mcpServer.AddTool(tool, handler)
@@ -73,6 +90,8 @@ func (s *Server) Start(ctx context.Context) error {
 		return s.startStdio(ctx)
 	case TransportSSE:
 		return s.startSSE(ctx)
+	case TransportStreamableHTTP:
+		return s.startStreamableHTTP(ctx)
 	default:
 		return fmt.Errorf("unsupported transport type: %s", s.transport)
 	}
@@ -104,6 +123,29 @@ func (s *Server) startSSE(ctx context.Context) error {
 	// Create and start SSE server
 	sseServer := server.NewSSEServer(s.mcpServer, opts...)
 	return sseServer.Start(s.sseConfig.Addr)
+}
+
+// startStreamableHTTP starts the server using Streamable HTTP transport.
+func (s *Server) startStreamableHTTP(ctx context.Context) error {
+	if s.streamableHTTPConfig == nil {
+		return fmt.Errorf("Streamable HTTP configuration is required for Streamable HTTP transport")
+	}
+
+	// Create Streamable HTTP server options
+	opts := []server.StreamableHTTPOption{}
+	if s.streamableHTTPConfig.EndpointPath != "" {
+		opts = append(opts, server.WithEndpointPath(s.streamableHTTPConfig.EndpointPath))
+	}
+	if s.streamableHTTPConfig.HeartbeatInterval > 0 {
+		opts = append(opts, server.WithHeartbeatInterval(s.streamableHTTPConfig.HeartbeatInterval))
+	}
+	if s.streamableHTTPConfig.Stateless {
+		opts = append(opts, server.WithStateLess(true))
+	}
+
+	// Create and start Streamable HTTP server
+	streamableServer := server.NewStreamableHTTPServer(s.mcpServer, opts...)
+	return streamableServer.Start(s.streamableHTTPConfig.Addr)
 }
 
 // GetMCPServer returns the underlying MCP server instance.

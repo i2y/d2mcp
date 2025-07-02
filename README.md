@@ -139,6 +139,9 @@ Replace `/path/to/d2mcp` with the actual path to your built binary.
 ./d2mcp
 # or explicitly
 ./d2mcp -transport=sse
+
+# Run with Streamable HTTP transport
+./d2mcp -transport=streamable
 ```
 
 ### Transport Options
@@ -175,6 +178,30 @@ HTTP-based transport that allows network connectivity:
 When running in SSE mode, the following endpoints are available:
 - SSE stream: `http://localhost:3000/mcp/sse`
 - Message endpoint: `http://localhost:3000/mcp/message`
+
+#### Streamable HTTP Transport
+The modern HTTP-based transport that simplifies bidirectional communication:
+```bash
+# Basic Streamable HTTP mode
+./d2mcp -transport=streamable
+
+# Custom configuration
+./d2mcp -transport=streamable \
+  -addr=:8080 \
+  -endpoint-path=/mcp \
+  -heartbeat-interval=30 \
+  -stateless
+```
+
+**Streamable HTTP Configuration Options:**
+- `-addr`: Address to listen on (default: ":3000")
+- `-endpoint-path`: Endpoint path for Streamable HTTP (default: "/mcp")
+- `-heartbeat-interval`: Heartbeat interval in seconds (default: 30)
+- `-stateless`: Enable stateless mode (default: false)
+
+**Streamable HTTP Endpoint:**
+When running in Streamable HTTP mode, a single endpoint handles all communication:
+- Endpoint: `http://localhost:3000/mcp`
 
 ## Tools
 
@@ -471,7 +498,9 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ### v0.5.0 (Latest)
 - Added SSE (Server-Sent Events) transport support for network connectivity
+- Added Streamable HTTP transport support for modern bidirectional communication
 - New command-line flags for transport configuration
+- Support for stateful and stateless modes in Streamable HTTP
 - Maintained backward compatibility with stdio transport
 - Improved error handling and logging for different transport modes
 

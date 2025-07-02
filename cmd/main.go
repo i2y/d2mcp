@@ -28,22 +28,28 @@ func main() {
 
 	// Parse command line flags.
 	var (
-		transport  string
-		addr       string
-		baseURL    string
-		basePath   string
-		keepAlive  int
+		transport         string
+		addr              string
+		baseURL           string
+		basePath          string
+		keepAlive         int
+		endpointPath      string
+		heartbeatInterval int
+		stateless         bool
 	)
-	flag.StringVar(&transport, "transport", "sse", "Transport mode: sse or stdio")
-	flag.StringVar(&addr, "addr", ":3000", "Address to listen on for SSE transport (e.g., :3000)")
+	flag.StringVar(&transport, "transport", "sse", "Transport mode: stdio, sse, or streamable")
+	flag.StringVar(&addr, "addr", ":3000", "Address to listen on for SSE/Streamable HTTP transport (e.g., :3000)")
 	flag.StringVar(&baseURL, "base-url", "", "Base URL for SSE transport (e.g., http://localhost:3000)")
 	flag.StringVar(&basePath, "base-path", "/mcp", "Base path for SSE endpoints")
 	flag.IntVar(&keepAlive, "keep-alive", 30, "Keep-alive interval in seconds for SSE")
+	flag.StringVar(&endpointPath, "endpoint-path", "/mcp", "Endpoint path for Streamable HTTP transport")
+	flag.IntVar(&heartbeatInterval, "heartbeat-interval", 30, "Heartbeat interval in seconds for Streamable HTTP")
+	flag.BoolVar(&stateless, "stateless", false, "Enable stateless mode for Streamable HTTP")
 	flag.Parse()
 
 	// Validate transport mode.
-	if transport != "stdio" && transport != "sse" {
-		fmt.Fprintf(os.Stderr, "Invalid transport mode: %s. Must be 'stdio' or 'sse'\n", transport)
+	if transport != "stdio" && transport != "sse" && transport != "streamable" {
+		fmt.Fprintf(os.Stderr, "Invalid transport mode: %s. Must be 'stdio', 'sse', or 'streamable'\n", transport)
 		os.Exit(1)
 	}
 
@@ -66,6 +72,8 @@ func main() {
 	// Log transport mode
 	if transport == "sse" {
 		log.Printf("Starting in SSE mode on %s", addr)
+	} else if transport == "streamable" {
+		log.Printf("Starting in Streamable HTTP mode on %s", addr)
 	}
 
 	// Create context.
@@ -108,6 +116,21 @@ func main() {
 		log.Printf("SSE endpoints will be available at:")
 		log.Printf("  SSE: %s%s/sse", baseURL, basePath)
 		log.Printf("  Messages: %s%s/message", baseURL, basePath)
+	case "streamable":
+		streamableConfig := &mcp.StreamableHTTPConfig{
+			Addr:              addr,
+			EndpointPath:      endpointPath,
+			HeartbeatInterval: time.Duration(heartbeatInterval) * time.Second,
+			Stateless:         stateless,
+		}
+		server.WithTransport(mcp.TransportStreamableHTTP).WithStreamableHTTPConfig(streamableConfig)
+		log.Printf("Streamable HTTP endpoint will be available at:")
+		log.Printf("  Endpoint: http://localhost%s%s", addr, endpointPath)
+		if stateless {
+			log.Printf("  Mode: Stateless")
+		} else {
+			log.Printf("  Mode: Stateful")
+		}
 	}
 
 	// Initialize handlers.
