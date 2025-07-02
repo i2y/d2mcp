@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"time"
 
 	"github.com/i2y/d2mcp/internal/infrastructure/d2"
 	"github.com/i2y/d2mcp/internal/infrastructure/mcp"
@@ -18,7 +19,7 @@ const (
 	// ServerName is the name of the MCP server.
 	ServerName = "d2mcp"
 	// ServerVersion is the version of the MCP server.
-	ServerVersion = "0.4.0"
+	ServerVersion = "0.5.0"
 )
 
 func main() {
@@ -26,8 +27,18 @@ func main() {
 	os.Setenv("D2_LOG_LEVEL", "NONE")
 
 	// Parse command line flags.
-	var transport string
+	var (
+		transport  string
+		addr       string
+		baseURL    string
+		basePath   string
+		keepAlive  int
+	)
 	flag.StringVar(&transport, "transport", "sse", "Transport mode: sse or stdio")
+	flag.StringVar(&addr, "addr", ":3000", "Address to listen on for SSE transport (e.g., :3000)")
+	flag.StringVar(&baseURL, "base-url", "", "Base URL for SSE transport (e.g., http://localhost:3000)")
+	flag.StringVar(&basePath, "base-path", "/mcp", "Base path for SSE endpoints")
+	flag.IntVar(&keepAlive, "keep-alive", 30, "Keep-alive interval in seconds for SSE")
 	flag.Parse()
 
 	// Validate transport mode.
@@ -52,10 +63,9 @@ func main() {
 		log.SetOutput(os.Stderr)
 	}
 
-	// Only proceed with stdio mode for now.
-	if transport != "stdio" {
-		fmt.Fprintf(os.Stderr, "Only stdio transport is currently supported\n")
-		os.Exit(1)
+	// Log transport mode
+	if transport == "sse" {
+		log.Printf("Starting in SSE mode on %s", addr)
 	}
 
 	// Create context.
@@ -72,6 +82,32 @@ func main() {
 	server, err := mcp.NewServer(ServerName, ServerVersion)
 	if err != nil {
 		log.Fatalf("Failed to create MCP server: %v", err)
+	}
+
+	// Configure transport
+	switch transport {
+	case "stdio":
+		server.WithTransport(mcp.TransportStdio)
+	case "sse":
+		// Auto-generate base URL if not provided
+		if baseURL == "" {
+			if addr[0] == ':' {
+				baseURL = fmt.Sprintf("http://localhost%s", addr)
+			} else {
+				baseURL = fmt.Sprintf("http://%s", addr)
+			}
+		}
+		
+		sseConfig := &mcp.SSEConfig{
+			Addr:              addr,
+			BaseURL:           baseURL,
+			StaticBasePath:    basePath,
+			KeepAliveInterval: time.Duration(keepAlive) * time.Second,
+		}
+		server.WithTransport(mcp.TransportSSE).WithSSEConfig(sseConfig)
+		log.Printf("SSE endpoints will be available at:")
+		log.Printf("  SSE: %s%s/sse", baseURL, basePath)
+		log.Printf("  Messages: %s%s/message", baseURL, basePath)
 	}
 
 	// Initialize handlers.
