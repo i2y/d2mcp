@@ -1,4 +1,4 @@
-.PHONY: build run clean test fmt lint
+.PHONY: build run run-stdio run-sse run-streamable clean test fmt lint
 
 # Binary name.
 BINARY_NAME=d2mcp
@@ -10,6 +10,18 @@ build:
 # Run the server.
 run: build
 	./$(BINARY_NAME)
+
+# Run with STDIO transport.
+run-stdio: build
+	./$(BINARY_NAME) -transport=stdio
+
+# Run with SSE transport.
+run-sse: build
+	./$(BINARY_NAME) -transport=sse
+
+# Run with Streamable HTTP transport.
+run-streamable: build
+	./$(BINARY_NAME) -transport=streamable
 
 # Clean build artifacts.
 clean:

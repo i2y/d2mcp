@@ -31,7 +31,6 @@ With the new Oracle API integration, AI assistants can now build and modify diag
 
 ### Additional Features
 - **20 themes** - Support for all D2 themes (18 light + 2 dark)
-- **MCP Protocol** - Standard protocol for AI tool integration
 
 ## Project Structure
 
@@ -104,11 +103,25 @@ Add to your Claude Desktop configuration file:
 **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 **Linux**: `~/.config/Claude/claude_desktop_config.json`
 
+**For STDIO transport (recommended for Claude Desktop):**
 ```json
 {
   "mcpServers": {
     "d2mcp": {
-      "command": "/path/to/d2mcp"
+      "command": "/path/to/d2mcp",
+      "args": ["-transport=stdio"]
+    }
+  }
+}
+```
+
+**For SSE transport:**
+```json
+{
+  "mcpServers": {
+    "d2mcp": {
+      "command": "/path/to/d2mcp",
+      "args": ["-transport=sse", "-addr=:3000"]
     }
   }
 }
@@ -120,8 +133,75 @@ Replace `/path/to/d2mcp` with the actual path to your built binary.
 
 ```bash
 # Run the MCP server (stdio transport)
+./d2mcp -transport=stdio
+
+# Run with SSE transport (default)
 ./d2mcp
+# or explicitly
+./d2mcp -transport=sse
+
+# Run with Streamable HTTP transport
+./d2mcp -transport=streamable
 ```
+
+### Transport Options
+
+d2mcp now supports multiple transport protocols:
+
+#### STDIO Transport
+The traditional stdio transport for direct process communication:
+```bash
+./d2mcp -transport=stdio
+```
+
+#### SSE Transport (Server-Sent Events)
+HTTP-based transport that allows network connectivity:
+```bash
+# Basic SSE mode (defaults to :3000)
+./d2mcp -transport=sse
+
+# Custom configuration
+./d2mcp -transport=sse \
+  -addr=:8080 \
+  -base-url=http://localhost:8080 \
+  -base-path=/mcp \
+  -keep-alive=30
+```
+
+**SSE Configuration Options:**
+- `-addr`: Address to listen on (default: ":3000")
+- `-base-url`: Base URL for SSE endpoints (auto-generated if not specified)
+- `-base-path`: Base path for SSE endpoints (default: "/mcp")
+- `-keep-alive`: Keep-alive interval in seconds (default: 30)
+
+**SSE Endpoints:**
+When running in SSE mode, the following endpoints are available:
+- SSE stream: `http://localhost:3000/mcp/sse`
+- Message endpoint: `http://localhost:3000/mcp/message`
+
+#### Streamable HTTP Transport
+The modern HTTP-based transport that simplifies bidirectional communication:
+```bash
+# Basic Streamable HTTP mode
+./d2mcp -transport=streamable
+
+# Custom configuration
+./d2mcp -transport=streamable \
+  -addr=:8080 \
+  -endpoint-path=/mcp \
+  -heartbeat-interval=30 \
+  -stateless
+```
+
+**Streamable HTTP Configuration Options:**
+- `-addr`: Address to listen on (default: ":3000")
+- `-endpoint-path`: Endpoint path for Streamable HTTP (default: "/mcp")
+- `-heartbeat-interval`: Heartbeat interval in seconds (default: 30)
+- `-stateless`: Enable stateless mode (default: false)
+
+**Streamable HTTP Endpoint:**
+When running in Streamable HTTP mode, a single endpoint handles all communication:
+- Endpoint: `http://localhost:3000/mcp`
 
 ## Tools
 
@@ -416,7 +496,15 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Changelog
 
-### v0.4.0 (Latest)
+### v0.5.0 (Latest)
+- Added SSE (Server-Sent Events) transport support for network connectivity
+- Added Streamable HTTP transport support for modern bidirectional communication
+- New command-line flags for transport configuration
+- Support for stateful and stateless modes in Streamable HTTP
+- Maintained backward compatibility with stdio transport
+- Improved error handling and logging for different transport modes
+
+### v0.4.0
 - Simplified API to unified `d2_create` for all diagram creation needs
 - Enhanced tool descriptions for better AI assistant integration
 - Improved Oracle API error handling and validation
